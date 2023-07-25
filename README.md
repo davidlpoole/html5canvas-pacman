@@ -7,7 +7,7 @@
 - [x] Project set up
 - [x] Generate map boundaries
 - [x] Add pacman 
-- [ ] Add pacman movement
+- [x] Add pacman movement
 - [ ] Add collision detection
 - [ ] Swap boundaries with images
 - [ ] Generate pellets

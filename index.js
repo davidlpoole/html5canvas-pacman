@@ -9,16 +9,10 @@ class Boundary {
     static width = 40;
     static height = 40;
 
-    constructor({ position }) {
+    constructor({position}) {
         this.position = position;
         this.width = 40;
         this.height = 40;
-
-        // shortcut methods for clipping detection
-        this.top = this.position.y;
-        this.bottom = this.position.y + this.height;
-        this.left = this.position.x;
-        this.right = this.position.x + this.width;
     }
 
     draw() {
@@ -28,7 +22,7 @@ class Boundary {
 }
 
 class Player {
-    constructor({ position ,velocity }) {
+    constructor({position, velocity}) {
         this.position = position;
         this.velocity = velocity;
         this.radius = 15;
@@ -46,18 +40,14 @@ class Player {
         this.draw();
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
-
-        // shortcut methods for clipping detection
-        this.top = this.position.y - this.radius;
-        this.bottom = this.position.y + this.radius;
-        this.left = this.position.x - this.radius;
-        this.right = this.position.x + this.radius;
     }
 }
 
 // array of ascii map tiles
 const map = [
     ['-', '-', '-', '-', '-', '-', '-'],
+    ['-', ' ', ' ', ' ', ' ', ' ', '-'],
+    ['-', ' ', '-', ' ', '-', ' ', '-'],
     ['-', ' ', ' ', ' ', ' ', ' ', '-'],
     ['-', ' ', '-', ' ', '-', ' ', '-'],
     ['-', ' ', ' ', ' ', ' ', ' ', '-'],
@@ -105,36 +95,119 @@ const keys = {
 
 let lastKey = '';
 
+function circleCollidesWithRectangle({ circle, rectangle }) {
+    return (
+        circle.position.y - circle.radius + circle.velocity.y <= rectangle.position.y + rectangle.height &&
+        circle.position.y + circle.radius + circle.velocity.y >= rectangle.position.y &&
+        circle.position.x - circle.radius + circle.velocity.x <= rectangle.position.x + rectangle.width &&
+        circle.position.x + circle.radius + circle.velocity.x >= rectangle.position.x
+    )
+}
+
 function animate() {
+
+    // reset the canvas
     requestAnimationFrame(animate);
     c.clearRect(0, 0, canvas.width, canvas.height)
+
+    // move depending on key input
+    if (lastKey === 'w') {
+        for (let i = 0; i < boundaries.length; i++) {
+            const boundary = boundaries[i];
+            if (circleCollidesWithRectangle({
+                circle: {
+                    ...player,
+                    velocity: {
+                        x: 0,
+                        y: -5,
+                    }
+                },
+                rectangle: boundary,
+            })
+            ) {
+                player.velocity.y = 0;
+                break
+            } else {
+                player.velocity.y = -5;
+            }
+        }
+
+    } else if (lastKey === 'a') {
+        for (let i = 0; i < boundaries.length; i++) {
+            const boundary = boundaries[i];
+            if (circleCollidesWithRectangle({
+                circle: {
+                    ...player,
+                    velocity: {
+                        x: -5,
+                        y: 0,
+                    }
+                },
+                rectangle: boundary,
+            })
+            ) {
+                player.velocity.x = 0;
+                break
+            } else {
+                player.velocity.x = -5;
+            }
+        }
+
+    } else if (lastKey === 's') {
+        for (let i = 0; i < boundaries.length; i++) {
+            const boundary = boundaries[i];
+            if (circleCollidesWithRectangle({
+                circle: {
+                    ...player,
+                    velocity: {
+                        x: 0,
+                        y: 5,
+                    }
+                },
+                rectangle: boundary,
+            })
+            ) {
+                player.velocity.y = 0;
+                break
+            } else {
+                player.velocity.y = 5;
+            }
+        }
+
+    } else if (lastKey === 'd') {
+        for (let i = 0; i < boundaries.length; i++) {
+            const boundary = boundaries[i];
+            if (circleCollidesWithRectangle({
+                circle: {
+                    ...player,
+                    velocity: {
+                        x: 5,
+                        y: 0,
+                    }
+                },
+                rectangle: boundary,
+            })
+            ) {
+                player.velocity.x = 0;
+                break
+            } else {
+                player.velocity.x = 5;
+            }
+        }
+    }
+
     boundaries.forEach((boundary) => {
         // draw the boundaries onto canvas as per x y coords
         boundary.draw();
 
-        player.velocity.x = 0;
-        player.velocity.y = 0;
-
-        if (keys.w.pressed && lastKey === 'w') {
-            player.velocity.y = -5;
-        } else if (keys.a.pressed && lastKey === 'a') {
-            player.velocity.x = -5;
-        } else if (keys.s.pressed && lastKey === 's') {
-            player.velocity.y = 5;
-        } else if (keys.d.pressed && lastKey === 'd') {
-            player.velocity.x = 5;
-        }
-
         // wall collision detection
-        // if (
-        //     player.top + player.velocity.y <= boundary.bottom &&
-        //     player.bottom + player.velocity.y >= boundary.top &&
-        //     player.left + player.velocity.x <= boundary.right &&
-        //     player.right + player.velocity.x >= boundary.left
-        // ) {
-        //     player.velocity.x = 0;
-        //     player.velocity.y = 0;
-        // }
+        if (circleCollidesWithRectangle({
+            circle: player,
+            rectangle: boundary
+        })) {
+            player.velocity.x = 0;
+            player.velocity.y = 0;
+        }
     })
 
     // draw the pacman/player
@@ -144,42 +217,19 @@ function animate() {
 animate();
 
 // listen for W,A,S,D movement keys and adjust pacman velocity
-window.addEventListener('keydown', ({ key }) => {
+window.addEventListener('keydown', ({key}) => {
     switch (key) {
         case 'w':
-            keys.w.pressed = true;
             lastKey = 'w';
             break;
         case 'a':
-            keys.a.pressed = true;
             lastKey = 'a';
             break;
         case 's':
-            keys.s.pressed = true;
             lastKey = 's';
             break;
         case 'd':
-            keys.d.pressed = true;
             lastKey = 'd';
             break;
     }
-    console.log('keydown', key);
-});
-
-window.addEventListener('keyup', ({ key }) => {
-    switch (key) {
-        case 'w':
-            keys.w.pressed = false;
-            break;
-        case 'a':
-            keys.a.pressed = false;
-            break;
-        case 's':
-            keys.s.pressed = false;
-            break;
-        case 'd':
-            keys.d.pressed = false;
-            break;
-    }
-    console.log('keyup', key);
 });
