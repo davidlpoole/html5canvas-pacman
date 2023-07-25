@@ -6,7 +6,8 @@
 ## Tasks:
 - [x] Project set up
 - [x] Generate map boundaries
-- [ ] Add pacman with movement
+- [x] Add pacman 
+- [ ] Add pacman movement
 - [ ] Add collision detection
 - [ ] Swap boundaries with images
 - [ ] Generate pellets

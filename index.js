@@ -21,6 +21,22 @@ class Boundary {
     }
 }
 
+class Player {
+    constructor({ position ,velocity }) {
+        this.position = position;
+        this.velocity = velocity;
+        this.radius = 15;
+    }
+
+    draw() {
+        c.beginPath();
+        c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        c.fillStyle = 'yellow';
+        c.fill();
+        c.closePath();
+    }
+}
+
 // array of ascii map tiles
 const map = [
     ['-', '-', '-', '-', '-', '-'],
@@ -32,6 +48,18 @@ const map = [
 
 // convert ascii array into list of boundaries with x y coords
 const boundaries = [];
+
+const player = new Player({
+    position: {
+        x: Boundary.width * 1.5,
+        y: Boundary.height * 1.5,
+    },
+    velocity: {
+        x: 0,
+        y: 0,
+    }
+});
+
 map.forEach((row, i) => {
     row.forEach((symbol, j) => {
         switch (symbol) {
@@ -52,3 +80,5 @@ map.forEach((row, i) => {
 boundaries.forEach((boundary) => {
     boundary.draw();
 })
+
+player.draw();
