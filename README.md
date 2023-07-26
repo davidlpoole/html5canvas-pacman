@@ -8,8 +8,8 @@
 - [x] Generate map boundaries
 - [x] Add pacman 
 - [x] Add pacman movement
-- [ ] Add collision detection
-- [ ] Swap boundaries with images
+- [x] Add collision detection
+- [x] Swap boundaries with images
 - [ ] Generate pellets
 - [ ] Remove pellets on collision
 - [ ] Add score

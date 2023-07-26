@@ -9,15 +9,18 @@ class Boundary {
     static width = 40;
     static height = 40;
 
-    constructor({position}) {
+    constructor({position, image}) {
         this.position = position;
         this.width = 40;
         this.height = 40;
+        this.image = image;
     }
 
     draw() {
-        c.fillStyle = 'blue';
-        c.fillRect(this.position.x, this.position.y, this.width, this.height);
+        // c.fillStyle = 'blue';
+        // c.fillRect(this.position.x, this.position.y, this.width, this.height);
+
+        c.drawImage(this.image, this.position.x, this.position.y)
     }
 }
 
@@ -45,14 +48,38 @@ class Player {
 
 // array of ascii map tiles
 const map = [
-    ['-', '-', '-', '-', '-', '-', '-'],
-    ['-', ' ', ' ', ' ', ' ', ' ', '-'],
-    ['-', ' ', '-', ' ', '-', ' ', '-'],
-    ['-', ' ', ' ', ' ', ' ', ' ', '-'],
-    ['-', ' ', '-', ' ', '-', ' ', '-'],
-    ['-', ' ', ' ', ' ', ' ', ' ', '-'],
-    ['-', '-', '-', '-', '-', '-', '-'],
+    ['1', '-', '-', '-', '-', '-', 'd', '-', '-', '-', '-', '-', '2'],
+    ['|', ' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', ' ', ' ', ' ', '|'],
+    ['|', ' ', 'o', ' ', '^', ' ', '_', ' ', '1', '-', ']', ' ', '|'],
+    ['|', ' ', ' ', ' ', '|', ' ', ' ', ' ', '|', ' ', ' ', ' ', '|'],
+    ['|', ' ', '[', '-', '3', ' ', '^', ' ', '_', ' ', 'o', ' ', '|'],
+    ['|', ' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', ' ', ' ', ' ', '|'],
+    ['l', '-', ']', ' ', '[', '-', 'x', '-', ']', ' ', '[', '-', 'r'],
+    ['|', ' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', ' ', ' ', ' ', '|'],
+    ['|', ' ', '1', '-', ']', ' ', '_', ' ', 'o', ' ', '^', ' ', '|'],
+    ['|', ' ', '|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|', ' ', '|'],
+    ['|', ' ', '_', ' ', 'o', ' ', '^', ' ', '[', '-', '3', ' ', '|'],
+    ['|', ' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', ' ', ' ', ' ', '|'],
+    ['4', '-', '-', '-', '-', '-', 'u', '-', '-', '-', '-', '-', '3'],
 ];
+
+function createImage(src) {
+    const image = new Image();
+    image.src = src;
+    return image;
+}
+
+function newBoundary(i, j, imgSrc) {
+    boundaries.push(new Boundary({
+        position: {
+            x: Boundary.width * j,
+            y: Boundary.height * i,
+        },
+        image: createImage(imgSrc),
+        })
+    )
+}
+
 
 // convert ascii array into list of boundaries with x y coords
 const boundaries = [];
@@ -62,13 +89,52 @@ map.forEach((row, i) => {
     row.forEach((symbol, j) => {
         switch (symbol) {
             case '-':
-                boundaries.push(new Boundary({
-                        position: {
-                            x: Boundary.width * j,
-                            y: Boundary.height * i,
-                        }
-                    }
-                ))
+                newBoundary(i, j, './img/pipeHorizontal.png');
+                break;
+            case '|':
+                newBoundary(i, j, './img/pipeVertical.png');
+                break;
+            case '1':
+                newBoundary(i, j, './img/pipeCorner1.png');
+                break;
+            case '2':
+                newBoundary(i, j, './img/pipeCorner2.png');
+                break;
+            case '3':
+                newBoundary(i, j, './img/pipeCorner3.png');
+                break;
+            case '4':
+                newBoundary(i, j, './img/pipeCorner4.png');
+                break;
+            case 'o':
+                newBoundary(i, j, './img/block.png');
+                break;
+            case '_':
+                newBoundary(i, j, './img/capBottom.png');
+                break;
+            case '^':
+                newBoundary(i, j, './img/capTop.png');
+                break;
+            case '[':
+                newBoundary(i, j, './img/capLeft.png');
+                break;
+            case ']':
+                newBoundary(i, j, './img/capRight.png');
+                break;
+            case 'x':
+                newBoundary(i, j, './img/pipeCross.png');
+                break;
+            case 'd':
+                newBoundary(i, j, './img/pipeConnectorBottom.png');
+                break;
+            case 'u':
+                newBoundary(i, j, './img/pipeConnectorTop.png');
+                break;
+            case 'l':
+                newBoundary(i, j, './img/pipeConnectorLeft.png');
+                break;
+            case 'r':
+                newBoundary(i, j, './img/pipeConnectorRight.png');
                 break;
         }
     })
