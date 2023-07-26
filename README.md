@@ -10,10 +10,11 @@
 - [x] Add pacman movement
 - [x] Add collision detection
 - [x] Swap boundaries with images
-- [ ] Generate pellets
-- [ ] Remove pellets on collision
-- [ ] Add score
+- [x] Generate pellets
+- [x] Remove pellets on collision
+- [x] Add score
 - [ ] Create ghost
+- [ ] Add ghost movement
 - [ ] Create power-up pellet
 - [ ] Add win condition
 - [ ] Layout full level

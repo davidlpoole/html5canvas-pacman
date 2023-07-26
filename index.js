@@ -1,5 +1,6 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
+const scoreOutput = document.querySelector('#scoreOutput');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -46,22 +47,40 @@ class Player {
     }
 }
 
+class Pellet {
+    constructor({position}) {
+        this.position = position;
+        this.radius = 3;
+    }
+
+    draw() {
+        c.beginPath();
+        c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        c.fillStyle = 'white';
+        c.fill();
+        c.closePath();
+    }
+}
+
 // array of ascii map tiles
 const map = [
     ['1', '-', '-', '-', '-', '-', 'd', '-', '-', '-', '-', '-', '2'],
-    ['|', ' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', ' ', ' ', ' ', '|'],
-    ['|', ' ', 'o', ' ', '^', ' ', '_', ' ', '1', '-', ']', ' ', '|'],
-    ['|', ' ', ' ', ' ', '|', ' ', ' ', ' ', '|', ' ', ' ', ' ', '|'],
-    ['|', ' ', '[', '-', '3', ' ', '^', ' ', '_', ' ', 'o', ' ', '|'],
-    ['|', ' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', ' ', ' ', ' ', '|'],
-    ['l', '-', ']', ' ', '[', '-', 'x', '-', ']', ' ', '[', '-', 'r'],
-    ['|', ' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', ' ', ' ', ' ', '|'],
-    ['|', ' ', '1', '-', ']', ' ', '_', ' ', 'o', ' ', '^', ' ', '|'],
-    ['|', ' ', '|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|', ' ', '|'],
-    ['|', ' ', '_', ' ', 'o', ' ', '^', ' ', '[', '-', '3', ' ', '|'],
-    ['|', ' ', ' ', ' ', ' ', ' ', '|', ' ', ' ', ' ', ' ', ' ', '|'],
+    ['|', '.', '.', '.', '.', '.', '|', '.', '.', '.', '.', '.', '|'],
+    ['|', '.', 'o', '.', '^', '.', '_', '.', '1', '-', ']', '.', '|'],
+    ['|', '.', '.', '.', '|', '.', '.', '.', '|', '.', '.', '.', '|'],
+    ['|', '.', '[', '-', '3', '.', '^', '.', '_', '.', 'o', '.', '|'],
+    ['|', '.', '.', '.', '.', '.', '|', '.', '.', '.', '.', '.', '|'],
+    ['l', '-', ']', '.', '[', '-', 'x', '-', ']', '.', '[', '-', 'r'],
+    ['|', '.', '.', '.', '.', '.', '|', '.', '.', '.', '.', '.', '|'],
+    ['|', '.', '1', '-', ']', '.', '_', '.', 'o', '.', '^', '.', '|'],
+    ['|', '.', '|', '.', '.', '.', '.', '.', '.', '.', '|', '.', '|'],
+    ['|', '.', '_', '.', 'o', '.', '^', '.', '[', '-', '3', '.', '|'],
+    ['|', '.', '.', '.', '.', '.', '|', '.', '.', '.', '.', '.', '|'],
     ['4', '-', '-', '-', '-', '-', 'u', '-', '-', '-', '-', '-', '3'],
 ];
+
+const boundaries = [];
+const pellets = [];
 
 function createImage(src) {
     const image = new Image();
@@ -71,18 +90,14 @@ function createImage(src) {
 
 function newBoundary(i, j, imgSrc) {
     boundaries.push(new Boundary({
-        position: {
-            x: Boundary.width * j,
-            y: Boundary.height * i,
-        },
-        image: createImage(imgSrc),
+            position: {
+                x: Boundary.width * j,
+                y: Boundary.height * i,
+            },
+            image: createImage(imgSrc),
         })
     )
 }
-
-
-// convert ascii array into list of boundaries with x y coords
-const boundaries = [];
 
 // loop through the ascii map to create a boundaries array
 map.forEach((row, i) => {
@@ -136,6 +151,16 @@ map.forEach((row, i) => {
             case 'r':
                 newBoundary(i, j, './img/pipeConnectorRight.png');
                 break;
+            case '.':
+                pellets.push(
+                    new Pellet({
+                        position: {
+                            x: j * Boundary.width + Boundary.width / 2,
+                            y: i * Boundary.height + Boundary.height / 2,
+                        }
+                    })
+                )
+                break;
         }
     })
 })
@@ -160,8 +185,9 @@ const keys = {
 }
 
 let lastKey = '';
+let gameScore = 0;
 
-function circleCollidesWithRectangle({ circle, rectangle }) {
+function circleCollidesWithRectangle({circle, rectangle}) {
     return (
         circle.position.y - circle.radius + circle.velocity.y <= rectangle.position.y + rectangle.height &&
         circle.position.y + circle.radius + circle.velocity.y >= rectangle.position.y &&
@@ -227,6 +253,19 @@ function animate() {
             player.velocity.y = 0;
         }
     })
+
+    // loop backwards to stop rendering issues (flickering pellets)
+    for (let i = pellets.length - 1; 0 < i; i--) {
+        const pellet = pellets[i];
+        pellet.draw();
+
+        if (Math.hypot(pellet.position.x - player.position.x, pellet.position.y - player.position.y
+        ) < pellet.radius + player.radius) {
+            pellets.splice(i, 1);
+            gameScore += 10;
+            scoreOutput.innerHTML = gameScore
+        }
+    }
 
     // draw the pacman/player
     player.update();
