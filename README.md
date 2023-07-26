@@ -13,7 +13,7 @@
 - [x] Generate pellets
 - [x] Remove pellets on collision
 - [x] Add score
-- [ ] Create ghost
+- [x] Create ghost
 - [ ] Add ghost movement
 - [ ] Create power-up pellet
 - [ ] Add win condition

@@ -47,6 +47,29 @@ class Player {
     }
 }
 
+class Ghost {
+    constructor({position, velocity, colour = 'red'}) {
+        this.position = position;
+        this.velocity = velocity;
+        this.radius = 15;
+        this.colour = colour;
+    }
+
+    draw() {
+        c.beginPath();
+        c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        c.fillStyle = this.colour;
+        c.fill();
+        c.closePath();
+    }
+
+    update() {
+        this.draw();
+        this.position.x += this.velocity.x;
+        this.position.y += this.velocity.y;
+    }
+}
+
 class Pellet {
     constructor({position}) {
         this.position = position;
@@ -81,6 +104,18 @@ const map = [
 
 const boundaries = [];
 const pellets = [];
+const ghosts = [
+    new Ghost({
+        position: {
+            x: 11 * Boundary.width + (Boundary.width / 2),
+            y: 1 * Boundary.height + (Boundary.height / 2),
+        },
+        velocity: {
+            x: 0,
+            y: 0,
+        },
+    })
+]
 
 function createImage(src) {
     const image = new Image();
@@ -88,11 +123,11 @@ function createImage(src) {
     return image;
 }
 
-function newBoundary(i, j, imgSrc) {
+function newBoundary(x, y, imgSrc) {
     boundaries.push(new Boundary({
             position: {
-                x: Boundary.width * j,
-                y: Boundary.height * i,
+                x: Boundary.width * x,
+                y: Boundary.height * y,
             },
             image: createImage(imgSrc),
         })
@@ -100,63 +135,63 @@ function newBoundary(i, j, imgSrc) {
 }
 
 // loop through the ascii map to create a boundaries array
-map.forEach((row, i) => {
-    row.forEach((symbol, j) => {
+map.forEach((row, y) => {
+    row.forEach((symbol, x) => {
         switch (symbol) {
             case '-':
-                newBoundary(i, j, './img/pipeHorizontal.png');
+                newBoundary(x, y, './img/pipeHorizontal.png');
                 break;
             case '|':
-                newBoundary(i, j, './img/pipeVertical.png');
+                newBoundary(x, y, './img/pipeVertical.png');
                 break;
             case '1':
-                newBoundary(i, j, './img/pipeCorner1.png');
+                newBoundary(x, y, './img/pipeCorner1.png');
                 break;
             case '2':
-                newBoundary(i, j, './img/pipeCorner2.png');
+                newBoundary(x, y, './img/pipeCorner2.png');
                 break;
             case '3':
-                newBoundary(i, j, './img/pipeCorner3.png');
+                newBoundary(x, y, './img/pipeCorner3.png');
                 break;
             case '4':
-                newBoundary(i, j, './img/pipeCorner4.png');
+                newBoundary(x, y, './img/pipeCorner4.png');
                 break;
             case 'o':
-                newBoundary(i, j, './img/block.png');
+                newBoundary(x, y, './img/block.png');
                 break;
             case '_':
-                newBoundary(i, j, './img/capBottom.png');
+                newBoundary(x, y, './img/capBottom.png');
                 break;
             case '^':
-                newBoundary(i, j, './img/capTop.png');
+                newBoundary(x, y, './img/capTop.png');
                 break;
             case '[':
-                newBoundary(i, j, './img/capLeft.png');
+                newBoundary(x, y, './img/capLeft.png');
                 break;
             case ']':
-                newBoundary(i, j, './img/capRight.png');
+                newBoundary(x, y, './img/capRight.png');
                 break;
             case 'x':
-                newBoundary(i, j, './img/pipeCross.png');
+                newBoundary(x, y, './img/pipeCross.png');
                 break;
             case 'd':
-                newBoundary(i, j, './img/pipeConnectorBottom.png');
+                newBoundary(x, y, './img/pipeConnectorBottom.png');
                 break;
             case 'u':
-                newBoundary(i, j, './img/pipeConnectorTop.png');
+                newBoundary(x, y, './img/pipeConnectorTop.png');
                 break;
             case 'l':
-                newBoundary(i, j, './img/pipeConnectorLeft.png');
+                newBoundary(x, y, './img/pipeConnectorLeft.png');
                 break;
             case 'r':
-                newBoundary(i, j, './img/pipeConnectorRight.png');
+                newBoundary(x, y, './img/pipeConnectorRight.png');
                 break;
             case '.':
                 pellets.push(
                     new Pellet({
                         position: {
-                            x: j * Boundary.width + Boundary.width / 2,
-                            y: i * Boundary.height + Boundary.height / 2,
+                            x: x * Boundary.width + Boundary.width / 2,
+                            y: y * Boundary.height + Boundary.height / 2,
                         }
                     })
                 )
@@ -199,6 +234,7 @@ function circleCollidesWithRectangle({circle, rectangle}) {
 function handleMove(x, y) {
     for (let i = 0; i < boundaries.length; i++) {
         const boundary = boundaries[i];
+        // preempt whether the move will collide
         if (circleCollidesWithRectangle({
             circle: {
                 ...player,
@@ -259,6 +295,7 @@ function animate() {
         const pellet = pellets[i];
         pellet.draw();
 
+        // if player collides with a pellet
         if (Math.hypot(pellet.position.x - player.position.x, pellet.position.y - player.position.y
         ) < pellet.radius + player.radius) {
             pellets.splice(i, 1);
@@ -269,6 +306,9 @@ function animate() {
 
     // draw the pacman/player
     player.update();
+    ghosts.forEach((ghost) => {
+        ghost.update();
+    });
 }
 
 animate();
