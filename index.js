@@ -321,7 +321,7 @@ function animate() {
     })
 
     // loop backwards to stop rendering issues (flickering pellets)
-    for (let i = pellets.length - 1; 0 < i; i--) {
+    for (let i = pellets.length - 1; i > 0; i--) {
         const pellet = pellets[i];
         pellet.draw();
 
@@ -330,7 +330,12 @@ function animate() {
         ) < pellet.radius + player.radius) {
             pellets.splice(i, 1);
             gameScore += 10;
-            scoreOutput.innerHTML = gameScore
+            scoreOutput.innerHTML = gameScore;
+            console.log(pellets.length);
+            if (pellets.length === 1) {
+                console.log("You win");
+                cancelAnimationFrame(animationId);
+            }
         }
     }
 
