@@ -1,6 +1,7 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 const scoreOutput = document.querySelector('#scoreOutput');
+const statusOutput = document.querySelector('#gameStatus');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -25,6 +26,7 @@ class Boundary {
     }
 }
 
+// TODO: Player and Ghost can inherit from a parent class
 class Player {
     constructor({position, velocity}) {
         this.position = position;
@@ -57,12 +59,13 @@ class Ghost {
         this.colour = colour;
         this.prevCollisions = [];
         this.speed = 2;
+        this.scared = false;
     }
 
     draw() {
         c.beginPath();
         c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
-        c.fillStyle = this.colour;
+        c.fillStyle = this.scared ? 'blue' : this.colour;
         c.fill();
         c.closePath();
     }
@@ -89,30 +92,48 @@ class Pellet {
     }
 }
 
+class PowerUp {
+    constructor({position}) {
+        this.position = position;
+        this.radius = 8;
+    }
+
+    draw() {
+        c.beginPath();
+        c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        c.fillStyle = 'white';
+        c.fill();
+        c.closePath();
+    }
+}
+
 // array of ascii map tiles
 const map = [
     ['1', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '2'],
     ['|', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '|'],
     ['|', '.', 'o', '.', '^', '.', 'o', '.', '1', '-', ']', '.', '|'],
-    ['|', '.', '.', '.', '|', '.', '.', '.', '|', '.', '.', '.', '|'],
+    ['|', '.', '.', 'p', '|', '.', '.', '.', '|', 'p', '.', '.', '|'],
     ['|', '.', '[', '-', '3', '.', '^', '.', '_', '.', 'o', '.', '|'],
     ['|', '.', '.', '.', '.', '.', '|', '.', '.', '.', '.', '.', '|'],
     ['l', '-', ']', '.', '[', '-', 'x', '-', ']', '.', '[', '-', 'r'],
     ['|', '.', '.', '.', '.', '.', '|', '.', '.', '.', '.', '.', '|'],
     ['|', '.', '1', '-', ']', '.', '_', '.', 'o', '.', '^', '.', '|'],
-    ['|', '.', '|', '.', '.', '.', '.', '.', '.', '.', '|', '.', '|'],
+    ['|', '.', '|', 'p', '.', '.', '.', '.', '.', 'p', '|', '.', '|'],
     ['|', '.', '_', '.', 'o', '.', '^', '.', '[', '-', '3', '.', '|'],
     ['|', '.', '.', '.', '.', '.', '|', '.', '.', '.', '.', '.', '|'],
     ['4', '-', '-', '-', '-', '-', 'u', '-', '-', '-', '-', '-', '3'],
 ];
 
 const boundaries = [];
+
 const pellets = [];
+const powerUps = [];
+
 const ghosts = [
     new Ghost({
         position: {
             x: 11 * Boundary.width + (Boundary.width / 2),
-            y: 1 * Boundary.height + (Boundary.height / 2),
+            y: Boundary.height + (Boundary.height / 2),
         },
         velocity: {
             x: 0,
@@ -133,7 +154,7 @@ const ghosts = [
     }),
     new Ghost({
         position: {
-            x: 1 * Boundary.width + (Boundary.width / 2),
+            x: Boundary.width + (Boundary.width / 2),
             y: 11 * Boundary.height + (Boundary.height / 2),
         },
         velocity: {
@@ -223,6 +244,16 @@ map.forEach((row, y) => {
                     })
                 )
                 break;
+            case 'p':
+                powerUps.push(
+                    new PowerUp({
+                        position: {
+                            x: x * Boundary.width + Boundary.width / 2,
+                            y: y * Boundary.height + Boundary.height / 2,
+                        }
+                    })
+                )
+                break;
         }
     })
 })
@@ -248,6 +279,7 @@ const keys = {
 
 let lastKey = '';
 let gameScore = 0;
+let gameStatus = '';
 
 function circleCollidesWithRectangle({circle, rectangle}) {
     const padding = Boundary.width / 2 - circle.radius - 1;
@@ -320,8 +352,39 @@ function animate() {
         }
     })
 
+    // display the powerUps
+    for (let i = powerUps.length - 1; i >= 0; i--) {
+        const powerUp = powerUps[i];
+        powerUp.draw();
+
+        if (Math.hypot(powerUp.position.x - player.position.x, powerUp.position.y - player.position.y
+        ) < powerUp.radius + player.radius) {
+            powerUps.splice(i, 1);
+            gameScore += 50;
+
+            // make ghosts scared
+            ghosts.forEach((ghost) => {
+                console.log('ghosts scared: true')
+                ghost.scared = true;
+                setTimeout(() => {
+                    console.log('ghosts scared: false')
+                    ghost.scared = false;
+                }, 4000)
+            })
+
+            scoreOutput.innerHTML = gameScore;
+            console.log(powerUps.length);
+            if (pellets.length === 0 && powerUps.length === 0) { // TODO: refactor check win
+                console.log("You win");
+                gameStatus = 'You win';
+                statusOutput.innerHTML = gameStatus;
+                cancelAnimationFrame(animationId);
+            }
+        }
+    }
+
     // loop backwards to stop rendering issues (flickering pellets)
-    for (let i = pellets.length - 1; i > 0; i--) {
+    for (let i = pellets.length - 1; i >= 0; i--) {
         const pellet = pellets[i];
         pellet.draw();
 
@@ -332,8 +395,10 @@ function animate() {
             gameScore += 10;
             scoreOutput.innerHTML = gameScore;
             console.log(pellets.length);
-            if (pellets.length === 1) {
+            if (pellets.length === 0 && powerUps.length === 0) { // TODO: refactor check win
                 console.log("You win");
+                gameStatus = 'You win';
+                statusOutput.innerHTML = gameStatus;
                 cancelAnimationFrame(animationId);
             }
         }
@@ -341,19 +406,22 @@ function animate() {
 
     // draw the pacman/player
     player.update();
+
     ghosts.forEach((ghost) => {
         ghost.update();
 
         // TODO: Duplicated code fragment from pellet collision (refactor)
         if (Math.hypot(ghost.position.x - player.position.x, ghost.position.y - player.position.y
-        ) < ghost.radius + player.radius) {
+        ) < ghost.radius + player.radius && !ghost.scared) {
             console.log("You lose");
+            gameStatus = 'You lose';
+            statusOutput.innerHTML = gameStatus;
             cancelAnimationFrame(animationId);
         }
 
-
         const collisions = [];
 
+        // TODO: refactor this
         boundaries.forEach(boundary => {
             if (!collisions.includes('right') &&
                 circleCollidesWithRectangle({

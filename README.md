@@ -14,8 +14,8 @@
 - [x] Remove pellets on collision
 - [x] Add score
 - [x] Create ghost
-- [ ] Add ghost movement
-- [ ] Create power-up pellet
-- [ ] Add win condition
+- [x] Add ghost movement
+- [x] Create power-up pellet
+- [x] Add win condition
 - [ ] Layout full level
 - [ ] Pacman chomp (animation)
