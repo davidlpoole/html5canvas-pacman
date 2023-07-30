@@ -32,20 +32,32 @@ class Player {
         this.position = position;
         this.velocity = velocity;
         this.radius = 15;
+        this.radians = 0.75;
+        this.openRate = 0.12;
+        this.rotation = 0;
     }
 
     draw() {
+        c.save();
+        c.translate(this.position.x, this.position.y);
+        c.rotate(this.rotation);
+        c.translate(-this.position.x, -this.position.y);
         c.beginPath();
-        c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        c.arc(this.position.x, this.position.y, this.radius, this.radians, Math.PI * 2 - this.radians);
+        c.lineTo(this.position.x, this.position.y);
         c.fillStyle = 'yellow';
         c.fill();
         c.closePath();
+        c.restore();
     }
 
     update() {
         this.draw();
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
+
+        if (this.radians < 0 || this.radians > 0.75) this.openRate = -this.openRate;
+        this.radians += this.openRate;
     }
 }
 
@@ -352,6 +364,23 @@ function animate() {
         }
     })
 
+    // detect collision between ghosts and player
+    for (let i = ghosts.length - 1; i >= 0; i--) {
+        const ghost = ghosts[i];
+        if (Math.hypot(ghost.position.x - player.position.x, ghost.position.y - player.position.y
+        ) < ghost.radius + player.radius) {
+            if (ghost.scared) {
+                ghosts.splice(i, 1)
+            } else {
+                console.log("You lose");
+                gameStatus = 'You lose';
+                statusOutput.innerHTML = gameStatus;
+                cancelAnimationFrame(animationId);
+            }
+        }
+    }
+
+
     // display the powerUps
     for (let i = powerUps.length - 1; i >= 0; i--) {
         const powerUp = powerUps[i];
@@ -409,15 +438,6 @@ function animate() {
 
     ghosts.forEach((ghost) => {
         ghost.update();
-
-        // TODO: Duplicated code fragment from pellet collision (refactor)
-        if (Math.hypot(ghost.position.x - player.position.x, ghost.position.y - player.position.y
-        ) < ghost.radius + player.radius && !ghost.scared) {
-            console.log("You lose");
-            gameStatus = 'You lose';
-            statusOutput.innerHTML = gameStatus;
-            cancelAnimationFrame(animationId);
-        }
 
         const collisions = [];
 
@@ -520,8 +540,12 @@ function animate() {
             }
             ghost.prevCollisions = [];
         }
-
     });
+
+    if (player.velocity.x > 0) player.rotation = 0;
+    if (player.velocity.x < 0) player.rotation = Math.PI;
+    if (player.velocity.y > 0) player.rotation = Math.PI / 2;
+    if (player.velocity.y < 0) player.rotation = Math.PI * 1.5;
 }
 
 animate();

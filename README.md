@@ -17,5 +17,4 @@
 - [x] Add ghost movement
 - [x] Create power-up pellet
 - [x] Add win condition
-- [ ] Layout full level
-- [ ] Pacman chomp (animation)
+- [x] Pacman chomp (animation)
