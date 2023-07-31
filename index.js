@@ -19,9 +19,6 @@ class Boundary {
     }
 
     draw() {
-        // c.fillStyle = 'blue';
-        // c.fillRect(this.position.x, this.position.y, this.width, this.height);
-
         c.drawImage(this.image, this.position.x, this.position.y)
     }
 }
@@ -32,6 +29,7 @@ class Player {
         this.position = position;
         this.velocity = velocity;
         this.radius = 15;
+        this.speed = 2;  // Why does speed=3 not work?
         this.radians = 0.75;
         this.openRate = 0.12;
         this.rotation = 0;
@@ -56,8 +54,17 @@ class Player {
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
 
-        if (this.radians < 0 || this.radians > 0.75) this.openRate = -this.openRate;
+        // pacman mouth animation. TODO: Only open/close if pacman is moving
+        if (this.radians < 0 || this.radians > 0.75) {
+            this.openRate = -this.openRate;
+        }
         this.radians += this.openRate;
+
+        // change pacman facing direction
+        if (player.velocity.x > 0) player.rotation = 0;
+        if (player.velocity.x < 0) player.rotation = Math.PI;
+        if (player.velocity.y > 0) player.rotation = Math.PI / 2;
+        if (player.velocity.y < 0) player.rotation = Math.PI * 1.5;
     }
 }
 
@@ -195,57 +202,28 @@ function newBoundary(x, y, imgSrc) {
 }
 
 // loop through the ascii map to create a boundaries array
+const mapSymbols = {
+    '-': './img/pipeHorizontal.png',
+    '|': './img/pipeVertical.png',
+    '1': './img/pipeCorner1.png',
+    '2': './img/pipeCorner2.png',
+    '3': './img/pipeCorner3.png',
+    '4': './img/pipeCorner4.png',
+    'o': './img/block.png',
+    '_': './img/capBottom.png',
+    '^': './img/capTop.png',
+    '[': './img/capLeft.png',
+    ']': './img/capRight.png',
+    'x': './img/pipeCross.png',
+    'd': './img/pipeConnectorBottom.png',
+    'u': './img/pipeConnectorTop.png',
+    'l': './img/pipeConnectorLeft.png',
+    'r': './img/pipeConnectorRight.png',
+};
+
 map.forEach((row, y) => {
     row.forEach((symbol, x) => {
         switch (symbol) {
-            case '-':
-                newBoundary(x, y, './img/pipeHorizontal.png');
-                break;
-            case '|':
-                newBoundary(x, y, './img/pipeVertical.png');
-                break;
-            case '1':
-                newBoundary(x, y, './img/pipeCorner1.png');
-                break;
-            case '2':
-                newBoundary(x, y, './img/pipeCorner2.png');
-                break;
-            case '3':
-                newBoundary(x, y, './img/pipeCorner3.png');
-                break;
-            case '4':
-                newBoundary(x, y, './img/pipeCorner4.png');
-                break;
-            case 'o':
-                newBoundary(x, y, './img/block.png');
-                break;
-            case '_':
-                newBoundary(x, y, './img/capBottom.png');
-                break;
-            case '^':
-                newBoundary(x, y, './img/capTop.png');
-                break;
-            case '[':
-                newBoundary(x, y, './img/capLeft.png');
-                break;
-            case ']':
-                newBoundary(x, y, './img/capRight.png');
-                break;
-            case 'x':
-                newBoundary(x, y, './img/pipeCross.png');
-                break;
-            case 'd':
-                newBoundary(x, y, './img/pipeConnectorBottom.png');
-                break;
-            case 'u':
-                newBoundary(x, y, './img/pipeConnectorTop.png');
-                break;
-            case 'l':
-                newBoundary(x, y, './img/pipeConnectorLeft.png');
-                break;
-            case 'r':
-                newBoundary(x, y, './img/pipeConnectorRight.png');
-                break;
             case '.':
                 pellets.push(
                     new Pellet({
@@ -256,6 +234,7 @@ map.forEach((row, y) => {
                     })
                 )
                 break;
+
             case 'p':
                 powerUps.push(
                     new PowerUp({
@@ -266,9 +245,13 @@ map.forEach((row, y) => {
                     })
                 )
                 break;
+
+            default:
+                newBoundary(x, y, mapSymbols[symbol]);
         }
-    })
-})
+    });
+});
+
 
 // initialise the player (pacman)
 const player = new Player({
@@ -303,6 +286,11 @@ function circleCollidesWithRectangle({circle, rectangle}) {
     )
 }
 
+function circleCollidesWithCircle(ghost, player) {
+    return Math.hypot(ghost.position.x - player.position.x, ghost.position.y - player.position.y
+    ) < ghost.radius + player.radius
+}
+
 function handleMove(x, y) {
     for (let i = 0; i < boundaries.length; i++) {
         const boundary = boundaries[i];
@@ -311,19 +299,19 @@ function handleMove(x, y) {
             circle: {
                 ...player,
                 velocity: {
-                    x: (x) ? x : 0,
-                    y: (y) ? y : 0,
+                    x: x ? x : 0,
+                    y: y ? y : 0,
                 }
             },
             rectangle: boundary,
         })
         ) {
-            (x) ? player.velocity.x = 0 : null;
-            (y) ? player.velocity.y = 0 : null;
+            x ? player.velocity.x = 0 : null;
+            y ? player.velocity.y = 0 : null;
             break
         } else {
-            (x) ? player.velocity.x = x : null;
-            (y) ? player.velocity.y = y : null;
+            x ? player.velocity.x = x : null;
+            y ? player.velocity.y = y : null;
         }
     }
 }
@@ -338,18 +326,20 @@ function animate() {
 
     // move depending on key input
     if (lastKey === 'w') {
-        handleMove(null, -5);
+        handleMove(null, -player.speed);
 
     } else if (lastKey === 'a') {
-        handleMove(-5, null);
+        handleMove(-player.speed, null);
 
     } else if (lastKey === 's') {
-        handleMove(null, 5);
+        handleMove(null, player.speed);
 
     } else if (lastKey === 'd') {
-        handleMove(5, null);
+        handleMove(player.speed, null);
     }
 
+
+    // draw the boundaries
     boundaries.forEach((boundary) => {
         // draw the boundaries onto canvas as per x y coords
         boundary.draw();
@@ -367,8 +357,7 @@ function animate() {
     // detect collision between ghosts and player
     for (let i = ghosts.length - 1; i >= 0; i--) {
         const ghost = ghosts[i];
-        if (Math.hypot(ghost.position.x - player.position.x, ghost.position.y - player.position.y
-        ) < ghost.radius + player.radius) {
+        if (circleCollidesWithCircle(ghost, player)) {
             if (ghost.scared) {
                 ghosts.splice(i, 1)
             } else {
@@ -380,14 +369,12 @@ function animate() {
         }
     }
 
-
     // display the powerUps
     for (let i = powerUps.length - 1; i >= 0; i--) {
         const powerUp = powerUps[i];
         powerUp.draw();
 
-        if (Math.hypot(powerUp.position.x - player.position.x, powerUp.position.y - player.position.y
-        ) < powerUp.radius + player.radius) {
+        if (circleCollidesWithCircle(powerUp, player)) {
             powerUps.splice(i, 1);
             gameScore += 50;
 
@@ -395,6 +382,7 @@ function animate() {
             ghosts.forEach((ghost) => {
                 console.log('ghosts scared: true')
                 ghost.scared = true;
+
                 setTimeout(() => {
                     console.log('ghosts scared: false')
                     ghost.scared = false;
@@ -418,8 +406,7 @@ function animate() {
         pellet.draw();
 
         // if player collides with a pellet
-        if (Math.hypot(pellet.position.x - player.position.x, pellet.position.y - player.position.y
-        ) < pellet.radius + player.radius) {
+        if (circleCollidesWithCircle(pellet, player)) {
             pellets.splice(i, 1);
             gameScore += 10;
             scoreOutput.innerHTML = gameScore;
@@ -436,6 +423,7 @@ function animate() {
     // draw the pacman/player
     player.update();
 
+    // draw the ghosts
     ghosts.forEach((ghost) => {
         ghost.update();
 
@@ -541,11 +529,6 @@ function animate() {
             ghost.prevCollisions = [];
         }
     });
-
-    if (player.velocity.x > 0) player.rotation = 0;
-    if (player.velocity.x < 0) player.rotation = Math.PI;
-    if (player.velocity.y > 0) player.rotation = Math.PI / 2;
-    if (player.velocity.y < 0) player.rotation = Math.PI * 1.5;
 }
 
 animate();

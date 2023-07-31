@@ -16,5 +16,15 @@
 - [x] Create ghost
 - [x] Add ghost movement
 - [x] Create power-up pellet
+- [ ] Cancel first timeout if new pellet eaten
 - [x] Add win condition
 - [x] Pacman chomp (animation)
+- [ ] Eating ghost increases score
+- [ ] Ghosts spawn in cage
+- [ ] Scared ghosts flash when powerUp is expiring
+- [ ] Ghost animations
+- [ ] Multiple lives
+- [ ] Pipes to opposite side of screen
+- [ ] Progressively faster ghosts
+- [ ] Start game/pause screen
+- [ ] Audio
